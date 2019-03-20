@@ -57,27 +57,16 @@ public class G13HM1
         System.out.println("The max value using the reduce function is " + d_maxValue1);
 
         /* Max value with max function. */
-        /*JavaRDD<Double> dNumbers;
-          Double d_maxValue2 = dNumbers.max(new LengthComparator());
-         */
         double d_maxValue2 = dNumbers.max(new LengthComparator());
         System.out.println("The max value using the max function is " + d_maxValue2);
 
         /* Normalized values. */
         JavaRDD<Double> dNormalized = dNumbers.map((x) -> x/d_maxValue1);
 
-        /* Compute the average value of dNormalized. */
-        double d_count = dNormalized.count(); /* Number of elements in dNormalized. */
-        double d_average = dNormalized.reduce((x, y) -> x + y); /* Sum all values in dNormalized. */
-        d_average /= d_count; /* Divide by the number of elements in dNormalized. */
-        System.out.println("The average of dNormalized is " + d_average);
-
-
-        JavaRDD<Double> d_average_reduceset = dNormalized.filter((x) -> x<=0.8 && x>=0.2);
-        double d_count_reduceset = d_average_reduceset.count(); /* Number of elements in dNormalized. */
-        System.out.println("The average of dNormalized is " + d_count_reduceset);
-
-
-
+        JavaRDD<Double> dReducedSet = dNormalized.filter((x) -> x>=0.2 && x<=0.8);
+        double d_ReducedSetCount = dReducedSet.count(); /* Number of elements in dReducedSet. */
+        double d_probability = d_ReducedSetCount / dNormalized.count();
+        System.out.println("The probability of an element being withing 20% and 80% of the maximum value is "
+                + d_probability);
     }
 }
