@@ -63,9 +63,10 @@ public class G13HM1
         /* Normalized values. */
         JavaRDD<Double> dNormalized = dNumbers.map((x) -> x/d_maxValue1);
 
-        JavaRDD<Double> dReducedSet = dNormalized.filter((x) -> x>=0.2 && x<=0.8);
-        double d_ReducedSetCount = dReducedSet.count(); /* Number of elements in dReducedSet. */
-        double d_probability = d_ReducedSetCount / dNormalized.count();
+        /* Calculate the probability of a value being between 20% and 80% of the maximum value. */
+        JavaRDD<Double> dReducedSet = dNormalized.filter((x) -> x>=0.2 && x<=0.8); /* Values in the desired range. */
+        double d_ReducedSetCount = dReducedSet.count(); /* Number of values in the desired range. */
+        double d_probability = d_ReducedSetCount / dNormalized.count(); /* Probability. */
         System.out.println("The probability of an element being withing 20% and 80% of the maximum value is "
                 + d_probability);
     }
