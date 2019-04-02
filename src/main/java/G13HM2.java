@@ -6,12 +6,27 @@ public class G13HM2
 {
     public static void main(String[] args)
     {
+        int i_partitions = -1;
+        /* Input check. */
+        try
+        {
+            i_partitions = Integer.parseInt(args[0]);
+        }
+        catch(NumberFormatException e)
+        {
+            System.out.println("Insert an integer.");
+            return;
+        }
+
         /* Creation of Spark configuration and context. */
         SparkConf configuration = new SparkConf(true)
                         .setAppName("application name here");
         JavaSparkContext sc = new JavaSparkContext(configuration);
 
         /* Dataset input. */
-        JavaRDD<String> documentsRDD = sc.textFile(args[0]);
+        JavaRDD<String> documentsRDD = sc.textFile(args[1]);
+        JavaRDD<String> partitionedDocsRDD = documentsRDD.repartition(i_partitions); /* Dataset partitioning. */
+
+
     }
 }
