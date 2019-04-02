@@ -1,6 +1,13 @@
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.JavaRDD;
+
+import scala.Tuple2;
+
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Map;
 
 
 public class G13HM2
@@ -28,16 +35,38 @@ public class G13HM2
         JavaRDD<String> documentsRDD = sc.textFile(args[1]);
         JavaRDD<String> partitionedDocsRDD = documentsRDD.repartition(i_partitions); /* Dataset partitioning. */
 
+        documentsRDD.cache();
+        documentsRDD.count();
+        long startTime = System.currentTimeMillis();
+        JavaPairRDD<String, Long> count1RDD = improvedWordCount1(documentsRDD);
+        long endTime = System.currentTimeMillis();
+        System.out.println("The improved Word Count 1 takes " + (endTime - startTime) + "ms");
+
+        /* Print all elements in an RDD. */
+        /*
+        for (Tuple2<String, Long> element : count1RDD.collect())
+        {
+            System.out.println(element._1() + " " + element._2());
+        }
+        */
+        try
+        {
+            System.in.read();
+        }
+        catch(java.io.IOException e)
+        {
+
+        }
 
     }
 
-    public void improvedWordCount1(JavaRDD<String> documentsRDD)
+    public static JavaPairRDD<String,Long> improvedWordCount1(JavaRDD<String> documentsRDD)
     {
         JavaPairRDD<String, Long> docRDD = documentsRDD
                 // Map phase
-                .flatMapToPair((C) ->
+                .flatMapToPair((document) ->
                 {
-                    String[] tokens = documentsRDD.split(" ");
+                    String[] tokens = document.split(" ");
                     HashMap<String, Long> counts = new HashMap<>();
                     ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
                     for (String token : tokens)
@@ -61,15 +90,17 @@ public class G13HM2
                     }
                     return sum;
                 });
-
+        docRDD.cache();
+        docRDD.count();
+        return docRDD;
     }
 
-    public void improvedWordCount2a(JavaRDD<String> partitionedDocsRDD, int i_partitions)
+    public static void improvedWordCount2a(JavaRDD<String> partitionedDocsRDD, int i_partitions)
     {
 
     }
 
-    public void improvedWordCount2b(JavaRDD<String> partitionedDocsRDD, int i_partitions)
+    public static void improvedWordCount2b(JavaRDD<String> partitionedDocsRDD, int i_partitions)
     {
 
     }
