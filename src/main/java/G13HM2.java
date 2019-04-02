@@ -2,6 +2,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.JavaRDD;
 
+
 public class G13HM2
 {
     public static void main(String[] args)
@@ -30,8 +31,36 @@ public class G13HM2
 
     }
 
-    public void improvedWordCount1(JavaRDD<String> partitionedDocsRDD, int i_partitions)
+    public void improvedWordCount1(JavaRDD<String> documentsRDD)
     {
+        JavaPairRDD<String, Long> docRDD = documentsRDD
+                // Map phase
+                .flatMapToPair((C) ->
+                {
+                    String[] tokens = documentsRDD.split(" ");
+                    HashMap<String, Long> counts = new HashMap<>();
+                    ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
+                    for (String token : tokens)
+                    {
+                        counts.put(token, 1L + counts.getOrDefault(token, 0L));
+                    }
+                    for (Map.Entry<String, Long> e : counts.entrySet())
+                    {
+                        pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
+                    }
+                    return pairs.iterator();
+                })
+                // Reduce phase
+                .groupByKey()
+                .mapValues((it) ->
+                {
+                    long sum = 0;
+                    for (long c : it)
+                    {
+                        sum += c;
+                    }
+                    return sum;
+                });
 
     }
 
