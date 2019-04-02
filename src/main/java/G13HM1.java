@@ -5,6 +5,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -47,6 +48,9 @@ public class G13HM1
 
         // Create a parallel collection
         JavaRDD<Double> dNumbers = sc.parallelize(lNumbers);
+        //dNumbers.cache();
+        //dNumbers.count();
+        //long start = System.currentTimeMillis();
 
         /* Max value with reduce function. */
         double d_maxValue1 = dNumbers.reduce((x, y) ->
@@ -55,6 +59,9 @@ public class G13HM1
             else return y;
         });
         System.out.println("The max value using the reduce function is " + d_maxValue1);
+
+        //long end = System.currentTimeMillis();
+        //System.out.println(end-start);
 
         /* Max value with max function. */
         double d_maxValue2 = dNumbers.max(new LengthComparator());
@@ -69,5 +76,17 @@ public class G13HM1
         double d_probability = d_ReducedSetCount / dNormalized.count(); /* Probability. */
         System.out.println("The probability of an element being withing 20% and 80% of the maximum value is "
                 + d_probability);
+
+        /*HW2 tests*/
+        /*
+        try
+        {
+            System.in.read();
+        }
+        catch(java.io.IOException e)
+        {
+
+        }
+        */
     }
 }
