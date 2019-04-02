@@ -29,4 +29,21 @@ public class G13HM2
 
 
     }
+
+    public void improvedWordCount1(JavaRDD<String> partitionedDocsRDD, int i_partitions)
+    {
+
+    }
+
+    public void improvedWordCount2a(JavaRDD<String> partitionedDocsRDD, int i_partitions)
+    {
+
+    }
+
+    public void improvedWordCount2b(JavaRDD<String> partitionedDocsRDD, int i_partitions)
+    {
+
+    }
 }
+
+
