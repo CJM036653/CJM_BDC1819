@@ -1,4 +1,4 @@
-JavaPairRDD<String, Long> wordcountpairs = docs
+            JavaPairRDD<String, Long> wordcountpairs = docs
             // Map phase
             .flatMapToPair((document) -> {
               String[] tokens = document.split(" ");
