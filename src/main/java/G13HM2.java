@@ -41,7 +41,7 @@ public class G13HM2
         long startTime = System.currentTimeMillis();
         JavaPairRDD<String, Long> count1RDD = improvedWordCount1(documentsRDD);
         count1RDD.cache();
-        count1RDD.count();
+        long numberOfWords = count1RDD.count(); /* Number of individual words in the document. */
         long endTime = System.currentTimeMillis();
         System.out.println("The improved Word Count 1 takes " + (endTime - startTime) + "ms");
 
@@ -60,6 +60,21 @@ public class G13HM2
         count2bRDD.count();
         endTime = System.currentTimeMillis();
         System.out.println("The second Improved Word Count 2 takes " + (endTime - startTime) + "ms");
+
+
+        JavaPairRDD<String, Long> strLenRDD = count1RDD.mapToPair((x) ->
+        {
+            long l = x._1.length();
+            return new Tuple2<>(x._1, l);
+        });
+
+        Tuple2<String, Long> strLenSum = strLenRDD.reduce((x, y) ->
+        {
+            long l = x._1.length() + y._1.length();
+            return new Tuple2<>("a", l);
+        });
+        long averageLen = strLenSum._2/numberOfWords;
+        System.out.println("The average length of distinct words is: " + averageLen);
 
         /* Print all elements in an RDD. */
         /*
