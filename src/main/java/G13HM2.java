@@ -5,10 +5,7 @@ import org.apache.spark.api.java.JavaRDD;
 
 import scala.Tuple2;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 
 public class G13HM2
@@ -35,23 +32,35 @@ public class G13HM2
         /* Dataset input. */
         JavaRDD<String> documentsRDD = sc.textFile(args[1]);
         JavaRDD<String> partitionedDocsRDD = documentsRDD.repartition(i_partitions); /* Dataset partitioning. */
-
         documentsRDD.cache();
         documentsRDD.count();
+        partitionedDocsRDD.cache();
+        partitionedDocsRDD.count();
+
+        /* Improved Word Count 1 */
         long startTime = System.currentTimeMillis();
         JavaPairRDD<String, Long> count1RDD = improvedWordCount1(documentsRDD);
+        count1RDD.cache();
+        count1RDD.count();
         long endTime = System.currentTimeMillis();
         System.out.println("The improved Word Count 1 takes " + (endTime - startTime) + "ms");
 
-        JavaPairRDD<String, Long> count2aRDD = improvedWordCount2a(documentsRDD);
+        /* Improved Word Count 2 */
+        startTime = System.currentTimeMillis();
+        JavaPairRDD<String, Long> count2aRDD = improvedWordCount2a(documentsRDD, i_partitions);
+        count2aRDD.cache();
+        count2aRDD.count();
+        endTime = System.currentTimeMillis();
+        System.out.println("The improved Word Count 2 takes " + (endTime - startTime) + "ms");
 
         /* Print all elements in an RDD. */
         /*
-        for (Tuple2<String, Long> element : count1RDD.collect())
+        for (Tuple2<String, Long> element : count2aRDD.collect())
         {
             System.out.println(element._1() + " " + element._2());
         }
         */
+        /*
         try
         {
             System.in.read();
@@ -60,9 +69,11 @@ public class G13HM2
         {
 
         }
+        */
 
     }
 
+    /* Improved Word Count 1 */
     public static JavaPairRDD<String,Long> improvedWordCount1(JavaRDD<String> documentsRDD)
     {
         JavaPairRDD<String, Long> docRDD = documentsRDD
@@ -85,53 +96,66 @@ public class G13HM2
                 // Reduce phase
                 .reduceByKey((x,y) -> x + y);
 
-        docRDD.cache();
-        docRDD.count();
         return docRDD;
     }
 
-    public static JavaPairRDD<String,Long> improvedWordCount2a(JavaRDD<String> documentsRDD)
+    /* First Improved Word Count 2 */
+    public static JavaPairRDD<String,Long> improvedWordCount2a(JavaRDD<String> documentsRDD, int k)
     {
-        /* Create pairs (word, 1) and count the number of words to get N. */
-        JavaPairRDD<String, Long> wordsRDD = documentsRDD.flatMapToPair((x) ->
+        /*Round 1*/
+        /* Map Phase */
+        JavaPairRDD<String, Long> docRDD = documentsRDD.flatMapToPair((document) ->
+                {
+                    String[] tokens = document.split(" ");
+                    HashMap<String, Long> counts = new HashMap<>();
+                    ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
+                    for (String token : tokens)
+                    {
+                        counts.put(token, 1L + counts.getOrDefault(token, 0L));
+                    }
+                    for (Map.Entry<String, Long> e : counts.entrySet())
+                    {
+                        pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
+                    }
+                    return pairs.iterator();
+                });
+
+        Random randomGenerator = new Random(); /* Random number generator. */
+        JavaPairRDD<Long, Iterable<Tuple2<String, Long>>> partialCountRDD = docRDD.groupBy((x) ->
         {
-            String[] words = x.split(" ");
+            long randomInt = randomGenerator.nextInt(k);
+            return randomInt;
+        }, k);
+
+
+        /* Reduce Phase */
+        JavaPairRDD<String, Long> reduce1CountRDD = partialCountRDD.flatMapToPair((x) ->
+        {
+            HashMap<String, Long> counts = new HashMap<>();
             ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
-            for (String word : words)
+            Iterator<Tuple2<String, Long>> list = x._2().iterator();
+            while (list.hasNext())
             {
-                pairs.add(new Tuple2<>(word, 1L));
+                Tuple2<String, Long> element = list.next();
+                counts.put(element._1(), element._2() + counts.getOrDefault(element._1(), 0L));
+            }
+
+            for (Map.Entry<String, Long> e : counts.entrySet())
+            {
+                pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
             }
             return pairs.iterator();
         });
-        long N = wordsRDD.count();
-        System.out.println(N);
 
-        /*Round 1*/
-        /* Map Phase */
-        Random ran = new Random();
-        JavaPairRDD<Long, Iterable<Tuple2<String, Long>>> docRDD = wordsRDD.groupBy((x) ->
-            ran.nextInt(1) + (long)Math.sqrt(N)
-        );
-        docRDD.count();
-        docRDD.collect();
-        /*
 
-         */
-        /*Reduce Phase*//*
-        JavaPairRDD<String, Long> partialcountRDD = docRDD.reduceByKey((x,y) ->
-        {
-            System.out.println(x);
-            return JavaPairRDD<String, Long>("a", 1L);
-        });
-        System.out.println(partialcountRDD.first());
-        */
-
-        /*Round 2*/
-        /* Map Phase*/
-
-        return null;
+        /* Round 2 */
+        /* Map Phase - Identity */
+        /* Reduce Phase */
+        JavaPairRDD<String, Long> finalCountRDD = reduce1CountRDD.reduceByKey((x,y) -> x + y);
+        return finalCountRDD;
     }
 
+    /* Second improved Word Count 2*/
     public static void improvedWordCount2b(JavaRDD<String> partitionedDocsRDD, int i_partitions)
     {
 

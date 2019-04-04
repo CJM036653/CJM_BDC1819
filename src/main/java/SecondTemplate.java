@@ -43,4 +43,17 @@ public class SecondTemplate
                 });
     }
 }
+
+        /* Create pairs (word, 1) *//*
+        JavaPairRDD<String, Long> wordsRDD = documentsRDD.flatMapToPair((x) ->
+        {
+        String[] words = x.split(" ");
+        ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
+        for (String word : words)
+        {
+        pairs.add(new Tuple2<>(word, 1L));
+        }
+        return pairs.iterator();
+        });
+
 */
