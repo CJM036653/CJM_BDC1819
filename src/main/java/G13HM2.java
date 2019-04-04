@@ -45,13 +45,21 @@ public class G13HM2
         long endTime = System.currentTimeMillis();
         System.out.println("The improved Word Count 1 takes " + (endTime - startTime) + "ms");
 
-        /* Improved Word Count 2 */
+        /* First Improved Word Count 2 */
         startTime = System.currentTimeMillis();
         JavaPairRDD<String, Long> count2aRDD = improvedWordCount2a(documentsRDD, i_partitions);
         count2aRDD.cache();
         count2aRDD.count();
         endTime = System.currentTimeMillis();
-        System.out.println("The improved Word Count 2 takes " + (endTime - startTime) + "ms");
+        System.out.println("The first Improved Word Count 2 takes " + (endTime - startTime) + "ms");
+
+        /*Second Improved Word Count 2 */
+        startTime = System.currentTimeMillis();
+        JavaPairRDD<String, Long> count2bRDD = improvedWordCount2b(partitionedDocsRDD, i_partitions);
+        count2bRDD.cache();
+        count2bRDD.count();
+        endTime = System.currentTimeMillis();
+        System.out.println("The second Improved Word Count 2 takes " + (endTime - startTime) + "ms");
 
         /* Print all elements in an RDD. */
         /*
@@ -60,7 +68,7 @@ public class G13HM2
             System.out.println(element._1() + " " + element._2());
         }
         */
-        /*
+
         try
         {
             System.in.read();
@@ -69,7 +77,7 @@ public class G13HM2
         {
 
         }
-        */
+
 
     }
 
@@ -98,6 +106,7 @@ public class G13HM2
 
         return docRDD;
     }
+
 
     /* First Improved Word Count 2 */
     public static JavaPairRDD<String,Long> improvedWordCount2a(JavaRDD<String> documentsRDD, int k)
@@ -155,10 +164,51 @@ public class G13HM2
         return finalCountRDD;
     }
 
-    /* Second improved Word Count 2*/
-    public static void improvedWordCount2b(JavaRDD<String> partitionedDocsRDD, int i_partitions)
-    {
 
+    /* Second improved Word Count 2*/
+    public static JavaPairRDD<String,Long> improvedWordCount2b(JavaRDD<String> partitionedDocsRDD, int i_partitions)
+    {
+        /*Round 1*/
+        /* Map Phase */
+        JavaPairRDD<String, Long> docRDD = partitionedDocsRDD.flatMapToPair((document) ->
+        {
+            String[] tokens = document.split(" ");
+            HashMap<String, Long> counts = new HashMap<>();
+            ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
+            for (String token : tokens)
+            {
+                counts.put(token, 1L + counts.getOrDefault(token, 0L));
+            }
+            for (Map.Entry<String, Long> e : counts.entrySet())
+            {
+                pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
+            }
+            return pairs.iterator();
+        });
+
+        /* Reduce Phase */
+        JavaPairRDD<String, Long> partialCountRDD = docRDD.mapPartitionsToPair((x) ->
+        {
+            HashMap<String, Long> counts = new HashMap<>();
+            ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
+            while (x.hasNext())
+            {
+                Tuple2<String, Long> element = x.next();
+                counts.put(element._1(), element._2() + counts.getOrDefault(element._1(), 0L));
+            }
+
+            for (Map.Entry<String, Long> e : counts.entrySet())
+            {
+                pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
+            }
+            return pairs.iterator();
+        });
+
+        /* Round 2 */
+        /* Map Phase - Identity */
+        /* Reduce Phase */
+        JavaPairRDD<String, Long> finalCountRDD = partialCountRDD.reduceByKey((x,y) -> x + y);
+        return finalCountRDD;
     }
 }
 
