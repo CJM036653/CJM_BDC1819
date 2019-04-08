@@ -70,10 +70,10 @@ public class G13HM2
 
         Tuple2<String, Long> strLenSum = strLenRDD.reduce((x, y) ->
         {
-            long l = x._1.length() + y._1.length();
+            long l = x._2 + y._2;
             return new Tuple2<>("a", l);
         });
-        long averageLen = strLenSum._2/numberOfWords;
+        double averageLen = (double)strLenSum._2/numberOfWords;
         System.out.println("The average length of distinct words is: " + averageLen);
 
         /* Print all elements in an RDD. */
@@ -126,57 +126,54 @@ public class G13HM2
     /* First Improved Word Count 2 */
     public static JavaPairRDD<String,Long> improvedWordCount2a(JavaRDD<String> documentsRDD, int k)
     {
-        /*Round 1*/
-        /* Map Phase */
-        JavaPairRDD<String, Long> docRDD = documentsRDD.flatMapToPair((document) ->
-                {
-                    String[] tokens = document.split(" ");
-                    HashMap<String, Long> counts = new HashMap<>();
-                    ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
-                    for (String token : tokens)
-                    {
-                        counts.put(token, 1L + counts.getOrDefault(token, 0L));
-                    }
-                    for (Map.Entry<String, Long> e : counts.entrySet())
-                    {
-                        pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
-                    }
-                    return pairs.iterator();
-                });
-
         Random randomGenerator = new Random(); /* Random number generator. */
-        JavaPairRDD<Long, Iterable<Tuple2<String, Long>>> partialCountRDD = docRDD.groupBy((x) ->
-        {
-            long randomInt = randomGenerator.nextInt(k);
-            return randomInt;
-        }, k);
 
-
-        /* Reduce Phase */
-        JavaPairRDD<String, Long> reduce1CountRDD = partialCountRDD.flatMapToPair((x) ->
-        {
-            HashMap<String, Long> counts = new HashMap<>();
-            ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
-            Iterator<Tuple2<String, Long>> list = x._2().iterator();
-            while (list.hasNext())
+        JavaPairRDD<String, Long> docRDD = documentsRDD
+            /*Round 1*/
+            /* Map Phase */
+            .flatMapToPair((document) ->
             {
-                Tuple2<String, Long> element = list.next();
-                counts.put(element._1(), element._2() + counts.getOrDefault(element._1(), 0L));
-            }
-
-            for (Map.Entry<String, Long> e : counts.entrySet())
+                String[] tokens = document.split(" ");
+                HashMap<String, Long> counts = new HashMap<>();
+                ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
+                for (String token : tokens)
+                {
+                    counts.put(token, 1L + counts.getOrDefault(token, 0L));
+                }
+                for (Map.Entry<String, Long> e : counts.entrySet())
+                {
+                    pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
+                }
+                return pairs.iterator();
+            })
+            .groupBy((x) ->
             {
-                pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
-            }
-            return pairs.iterator();
-        });
+                long randomInt = randomGenerator.nextInt(k);
+                return randomInt;
+            }, k)
+            /* Reduce Phase*/
+            .flatMapToPair((x) ->
+            {
+                HashMap<String, Long> counts = new HashMap<>();
+                ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
+                Iterator<Tuple2<String, Long>> list = x._2().iterator();
+                while (list.hasNext())
+                {
+                    Tuple2<String, Long> element = list.next();
+                    counts.put(element._1(), element._2() + counts.getOrDefault(element._1(), 0L));
+                }
 
-
-        /* Round 2 */
-        /* Map Phase - Identity */
-        /* Reduce Phase */
-        JavaPairRDD<String, Long> finalCountRDD = reduce1CountRDD.reduceByKey((x,y) -> x + y);
-        return finalCountRDD;
+                for (Map.Entry<String, Long> e : counts.entrySet())
+                {
+                    pairs.add(new Tuple2<>(e.getKey(), e.getValue()));
+                }
+                return pairs.iterator();
+            })
+            /* Round 2 */
+            /* Map Phase - Identity */
+            /* Reduce Phase */
+            .reduceByKey((x,y) -> x + y);
+        return docRDD;
     }
 
 
