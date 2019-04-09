@@ -13,20 +13,28 @@ public class G13HM2
     public static void main(String[] args)
     {
         int i_partitions = -1;
-        /* Input check. */
+
+        /* Input check. Inputs have to be passed as command line arguments. */
         try
         {
+            if (args.length != 2) throw new IllegalArgumentException();
             i_partitions = Integer.parseInt(args[0]);
         }
         catch(NumberFormatException e)
         {
             System.out.println("Insert an integer.");
-            return;
+            System.exit(1);
+        }
+        catch(IllegalArgumentException e)
+        {
+            System.out.println("Usage: <k> <dataset>");
+            System.exit(1);
         }
 
         /* Creation of Spark configuration and context. */
         SparkConf configuration = new SparkConf(true)
-                        .setAppName("application name here");
+                .setAppName("application name here")
+                .setMaster("local");
         JavaSparkContext sc = new JavaSparkContext(configuration);
 
         /* Dataset input. */
@@ -83,7 +91,7 @@ public class G13HM2
             System.out.println(element._1() + " " + element._2());
         }
         */
-
+        /*
         try
         {
             System.in.read();
@@ -92,7 +100,7 @@ public class G13HM2
         {
 
         }
-
+        */
 
     }
 
@@ -148,9 +156,9 @@ public class G13HM2
             })
             .groupBy((x) ->
             {
-                long randomInt = randomGenerator.nextInt(k);
-                return randomInt;
-            }, k)
+                long randomLong = randomGenerator.nextInt(k);
+                return randomLong;
+            })
             /* Reduce Phase*/
             .flatMapToPair((x) ->
             {
