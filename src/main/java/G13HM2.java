@@ -61,7 +61,7 @@ public class G13HM2
         endTime = System.currentTimeMillis();
         System.out.println("The first Improved Word Count 2 takes " + (endTime - startTime) + "ms");
 
-        /*Second Improved Word Count 2 */
+        /* Second Improved Word Count 2 */
         startTime = System.currentTimeMillis();
         JavaPairRDD<String, Long> count2bRDD = improvedWordCount2b(partitionedDocsRDD, i_partitions);
         count2bRDD.cache();
@@ -69,13 +69,12 @@ public class G13HM2
         endTime = System.currentTimeMillis();
         System.out.println("The second Improved Word Count 2 takes " + (endTime - startTime) + "ms");
 
-
+        /* Compute the average length. */
         JavaPairRDD<String, Long> strLenRDD = count1RDD.mapToPair((x) ->
         {
             long l = x._1.length();
             return new Tuple2<>(x._1, l);
         });
-
         Tuple2<String, Long> strLenSum = strLenRDD.reduce((x, y) ->
         {
             long l = x._2 + y._2;
@@ -84,13 +83,7 @@ public class G13HM2
         double averageLen = (double)strLenSum._2/numberOfWords;
         System.out.println("The average length of distinct words is: " + averageLen);
 
-        /* Print all elements in an RDD. */
-        /*
-        for (Tuple2<String, Long> element : count2aRDD.collect())
-        {
-            System.out.println(element._1() + " " + element._2());
-        }
-        */
+        /* Pause the program to look at the web interface. */
         /*
         try
         {
@@ -101,7 +94,6 @@ public class G13HM2
 
         }
         */
-
     }
 
     /* Improved Word Count 1 */
@@ -111,6 +103,7 @@ public class G13HM2
                 // Map phase
                 .flatMapToPair((document) ->
                 {
+                    /* Split the document into words and compute the partial word counts. */
                     String[] tokens = document.split(" ");
                     HashMap<String, Long> counts = new HashMap<>();
                     ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
@@ -125,7 +118,7 @@ public class G13HM2
                     return pairs.iterator();
                 })
                 // Reduce phase
-                .reduceByKey((x,y) -> x + y);
+                .reduceByKey((x,y) -> x + y); /* Compute the final word counts. */
 
         return docRDD;
     }
@@ -141,6 +134,7 @@ public class G13HM2
             /* Map Phase */
             .flatMapToPair((document) ->
             {
+                /* Split the document into words and compute the partial word counts. */
                 String[] tokens = document.split(" ");
                 HashMap<String, Long> counts = new HashMap<>();
                 ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
@@ -156,12 +150,14 @@ public class G13HM2
             })
             .groupBy((x) ->
             {
+                /* Generate the random keys. */
                 long randomLong = randomGenerator.nextInt(k);
                 return randomLong;
             })
             /* Reduce Phase*/
             .flatMapToPair((x) ->
             {
+                /* Compute the partial word counts for pairs with the same random key. */
                 HashMap<String, Long> counts = new HashMap<>();
                 ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
                 Iterator<Tuple2<String, Long>> list = x._2().iterator();
@@ -180,7 +176,7 @@ public class G13HM2
             /* Round 2 */
             /* Map Phase - Identity */
             /* Reduce Phase */
-            .reduceByKey((x,y) -> x + y);
+            .reduceByKey((x,y) -> x + y); /* Compute the final word counts. */
         return docRDD;
     }
 
@@ -192,6 +188,7 @@ public class G13HM2
         /* Map Phase */
         JavaPairRDD<String, Long> docRDD = partitionedDocsRDD.flatMapToPair((document) ->
         {
+            /* Split the document into words and compute the partial word counts. */
             String[] tokens = document.split(" ");
             HashMap<String, Long> counts = new HashMap<>();
             ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
@@ -209,6 +206,7 @@ public class G13HM2
         /* Reduce Phase */
         JavaPairRDD<String, Long> partialCountRDD = docRDD.mapPartitionsToPair((x) ->
         {
+            /* Compute the partial word counts for pairs within the same partition. */
             HashMap<String, Long> counts = new HashMap<>();
             ArrayList<Tuple2<String, Long>> pairs = new ArrayList<>();
             while (x.hasNext())
@@ -227,7 +225,7 @@ public class G13HM2
         /* Round 2 */
         /* Map Phase - Identity */
         /* Reduce Phase */
-        JavaPairRDD<String, Long> finalCountRDD = partialCountRDD.reduceByKey((x,y) -> x + y);
+        JavaPairRDD<String, Long> finalCountRDD = partialCountRDD.reduceByKey((x,y) -> x + y); /* Compute the final word counts. */
         return finalCountRDD;
     }
 }

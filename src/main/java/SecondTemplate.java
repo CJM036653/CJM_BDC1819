@@ -57,3 +57,21 @@ public class SecondTemplate
         });
 
 */
+
+/* Print all elements in an RDD. */
+        /*
+        for (Tuple2<String, Long> element : count2aRDD.collect())
+        {
+            System.out.println(element._1() + " " + element._2());
+        }
+        */
+        /*
+        try
+        {
+            System.in.read();
+        }
+        catch(java.io.IOException e)
+        {
+
+        }
+        */
