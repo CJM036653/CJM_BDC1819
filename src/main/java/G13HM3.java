@@ -165,11 +165,19 @@ public class G13HM3
             for (int z = 0; z < k; z++)
             {
                 Vector c = Vectors.zeros(P.get(0).size());
+                /* Compute the sum of all coordinates. */
                 for (int z0 = 0; z0 < clusters.get(z).size(); z0++)
                 {
-                    BLAS.axpy(1,clusters.get(z).get(z0), c);
+                    BLAS.axpy(WP.get(z),clusters.get(z).get(z0), c);
                 }
-                BLAS.scal((1/clusters.get(z).size()),c);
+                /* Compute the sum of weights. */
+                long sumOfweights = 0;
+                for (int z0 = 0; z0 < WP.size(); z0++)
+                {
+                    sumOfweights += WP.get(z0);
+                }
+                /* Compute the final average. */
+                BLAS.scal((1/sumOfweights),c);
                 newC.add(c);
             }
 
