@@ -102,11 +102,12 @@ public class G13HM3
             double chosenValue = randomGenerator.nextDouble();
             double probabilitySum = 0;
             int j = 0;
-
+            /* Find the next centre, chosen with the appropriate probability distribution. */
             boolean done = false;
             while (!done)
             {
                 double newProbabilitySum = probabilitySum + (WP.get(j) * currentDistances.get(j).distance)/sumOfDistances;
+                /* If chosenValue is between probabilitySum and newProbabilitySum add the corresponding centre to C and end the loop. */
                 if (newProbabilitySum >= chosenValue)
                 {
                     Vector chosenPoint = P.remove(j);
@@ -152,7 +153,6 @@ public class G13HM3
             for (int z = 0; z < k; z++)
             {
                 clusters.add(new ArrayList<>());
-                clusters.get(z).add(C.get(z));
             }
             /* Add each point to its cluster. */
             for (int z = 0; z < P.size(); z++)
