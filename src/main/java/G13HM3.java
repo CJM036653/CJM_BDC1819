@@ -140,13 +140,11 @@ public class G13HM3
         {
             currentDistances.add(new Pair(0,z));
         }
-        /* Current value of the objective function. (The coefficient 1/|P| is not relevant.) */
-        double phi = kmeansObj(P,C);
 
         for (int i = 0; i < iter; i++)
         {
             /* Dataset clusters. */
-            ArrayList<ArrayList<Vector>> clusters = new ArrayList<>(k);
+            ArrayList<ArrayList<Integer>> clusters = new ArrayList<>(k);
 
             /* Partition(P,C) */
             /* Create clusters which contain their centres. */
@@ -157,7 +155,7 @@ public class G13HM3
             /* Add each point to its cluster. */
             for (int z = 0; z < P.size(); z++)
             {
-                clusters.get(currentDistances.get(z).index).add(P.get(z));
+                clusters.get(currentDistances.get(z).index).add(z);
             }
 
             /* Compute new centroids. */
@@ -168,41 +166,36 @@ public class G13HM3
                 /* Compute the sum of all coordinates. */
                 for (int z0 = 0; z0 < clusters.get(z).size(); z0++)
                 {
-                    BLAS.axpy(WP.get(z),clusters.get(z).get(z0), c);
+                    BLAS.axpy(WP.get(clusters.get(z).get(z0)),P.get(clusters.get(z).get(z0)), c);
                 }
                 /* Compute the sum of weights. */
                 long sumOfweights = 0;
-                for (int z0 = 0; z0 < WP.size(); z0++)
+                for (int z0 = 0; z0 < clusters.get(z).size(); z0++)
                 {
-                    sumOfweights += WP.get(z0);
+                    sumOfweights += WP.get(clusters.get(z).get(z0));
                 }
                 /* Compute the final average. */
-                BLAS.scal((1/sumOfweights),c);
+                BLAS.scal((1.0/sumOfweights),c);
                 newC.add(c);
             }
 
-            double newPhi = kmeansObj(P,newC);
-            if (newPhi < phi)
+            C = newC;
+            /* Recompute currentDistances. */
+            for (int z = 0; z < P.size(); z++)
             {
-                phi = newPhi;
-                C = newC;
-                /* Recompute currentDistances. */
-                for (int z = 0; z < P.size(); z++)
+                double minDistance = Math.sqrt(Vectors.sqdist(C.get(0), P.get(z)));
+                int minIndex = 0;
+                for (int z0 = 1; z0 < k; z0++)
                 {
-                    double minDistance = Math.sqrt(Vectors.sqdist(C.get(0), P.get(z)));
-                    int minIndex = 0;
-                    for (int z0 = 1; z0 < k; z0++)
+                    double distance = Math.sqrt(Vectors.sqdist(C.get(z0), P.get(z)));
+                    if (distance < minDistance)
                     {
-                        double distance = Math.sqrt(Vectors.sqdist(C.get(z0), P.get(z)));
-                        if (distance < minDistance)
-                        {
-                            minDistance = distance;
-                            minIndex = z0;
-                        }
+                        minDistance = distance;
+                        minIndex = z0;
                     }
-                    currentDistances.get(z).distance = minDistance;
-                    currentDistances.get(z).index = minIndex;
                 }
+                currentDistances.get(z).distance = minDistance;
+                currentDistances.get(z).index = minIndex;
             }
         }
 
