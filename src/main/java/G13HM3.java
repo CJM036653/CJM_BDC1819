@@ -160,27 +160,23 @@ public class G13HM3
             }
 
             /* Compute new centroids. */
-            ArrayList<Vector> newC = new ArrayList<>(k);
             for (int z = 0; z < k; z++)
             {
                 Vector c = Vectors.zeros(P.get(0).size());
-                /* Compute the sum of all coordinates. */
-                for (int z0 = 0; z0 < clusters.get(z).size(); z0++)
-                {
-                    BLAS.axpy(WP.get(clusters.get(z).get(z0)),P.get(clusters.get(z).get(z0)), c);
-                }
-                /* Compute the sum of weights. */
                 long sumOfweights = 0;
                 for (int z0 = 0; z0 < clusters.get(z).size(); z0++)
                 {
+                    /* Compute the sum of all coordinates. */
+                    BLAS.axpy(WP.get(clusters.get(z).get(z0)), P.get(clusters.get(z).get(z0)), c);
+                    /* Compute the sum of weights. */
                     sumOfweights += WP.get(clusters.get(z).get(z0));
                 }
+
                 /* Compute the final average. */
                 BLAS.scal((1.0/sumOfweights),c);
-                newC.add(c);
+                C.set(z, c);
             }
 
-            C = newC;
             /* Recompute currentDistances. */
             for (int z = 0; z < P.size(); z++)
             {
