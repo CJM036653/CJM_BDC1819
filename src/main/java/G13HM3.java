@@ -10,13 +10,14 @@ import org.apache.spark.mllib.linalg.BLAS;
 
 public class G13HM3
 {
-    /******************** MAIN ********************/
+    /********************************** MAIN **********************************/
     public static void main(String[] args)
     {
         ArrayList<Vector> P = new ArrayList<>();
         int k = 0;
         int iter = 0;
 
+        /* Input check. */
         if (args.length != 3)
         {
             System.out.println("Usage: <filename> <k> <iter>");
@@ -73,7 +74,7 @@ public class G13HM3
         /* Set of weights corresponding to the centres. */
         ArrayList<Long> C_WP = new ArrayList<>(k);
 
-        /******************** KMEANS++ **********************/
+        /********************************** KMEANS++ **********************************/
         /* Add first random element with uniform distribution and remove it from P. */
         Random randomGenerator = new Random();
         int randomInt = randomGenerator.nextInt(P.size());
@@ -132,7 +133,7 @@ public class G13HM3
             }
         }
 
-        /*********************** LLOYD **************************/
+        /********************************** LLOYD **********************************/
         /* Restore P, WP and currentDistances with the centres selected by Kmeans++ */
         P.addAll(C);
         WP.addAll(C_WP);
@@ -140,10 +141,10 @@ public class G13HM3
         {
             currentDistances.add(new Pair(0,z));
         }
-
+        /* Perform iter iterations of LLoyd's algorithm. */
         for (int i = 0; i < iter; i++)
         {
-            /* Dataset clusters. */
+            /* Arraylist containing currently computed clusters as indexes of the points contained in P. */
             ArrayList<ArrayList<Integer>> clusters = new ArrayList<>(k);
 
             /* Partition(P,C) */
@@ -205,10 +206,12 @@ public class G13HM3
 
     public static double kmeansObj(ArrayList<Vector> P, ArrayList<Vector> C)
     {
+        /* Sum of all distances of each point from the nearest centre. */
         double sumOfDistances = 0;
 
         for (int i = 0; i < P.size(); i++)
         {
+            /* Find the minimum distance of each point from C. */
             double minDistance = Math.sqrt(Vectors.sqdist(C.get(0), P.get(i)));
             for (int j = 1; j < C.size(); j++)
             {
@@ -220,11 +223,11 @@ public class G13HM3
             }
             sumOfDistances += minDistance;
         }
-
+        /* Return the average distance. */
         return sumOfDistances/P.size();
     }
 
-    /* Input functions. */
+    /********************************** INPUT FUNCTIONS **********************************/
     public static Vector strToVector(String str)
     {
         String[] tokens = str.split(" ");
