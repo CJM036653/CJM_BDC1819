@@ -71,21 +71,16 @@ public class G13HM3
 
         /* Set of centres. */
         ArrayList<Vector> C = new ArrayList<>(k);
-        /* Set of weights corresponding to the centres. */
-        ArrayList<Long> C_WP = new ArrayList<>(k);
 
         /********************************** KMEANS++ **********************************/
-        /* Add first random element with uniform distribution and remove it from P. */
+        /* Add first random element with uniform distribution. */
         Random randomGenerator = new Random();
         int randomInt = randomGenerator.nextInt(P.size());
-        Vector temp = P.remove(randomInt);
-        long temp_wp = WP.remove(randomInt);
-        C.add(temp);
-        C_WP.add(temp_wp);
+        C.add(P.get(randomInt));
 
         /* Store the minimum distance of all points in P from C. */
         ArrayList<Pair> currentDistances = new ArrayList<>(P.size());
-        /* Compute the minimum distance of all points in P from C. */
+        /* Compute the minimum distance of all points in P from the first centre. */
         for (int j = 0; j < P.size(); j++)
         {
             currentDistances.add(new Pair(Math.sqrt(Vectors.sqdist(P.get(j), C.get(0))), 0));
@@ -107,22 +102,20 @@ public class G13HM3
             boolean done = false;
             while (!done)
             {
-                double newProbabilitySum = probabilitySum + (WP.get(j) * currentDistances.get(j).distance)/sumOfDistances;
-                /* If chosenValue is between probabilitySum and newProbabilitySum add the corresponding centre to C and end the loop. */
-                if (newProbabilitySum >= chosenValue)
+                double currentProbability = (WP.get(j) * currentDistances.get(j).distance)/sumOfDistances;
+                double newProbabilitySum = probabilitySum + currentProbability;
+                /* If the current element is not already a centre... */
+                if (currentProbability != 0)
                 {
-                    Vector chosenPoint = P.remove(j);
-                    currentDistances.remove(j);
-                    long chosenPoint_WP = WP.remove(j);
-                    C.add(chosenPoint);
-                    C_WP.add(chosenPoint_WP);
-                    done = true;
+                    /* If chosenValue is between probabilitySum and newProbabilitySum add the corresponding point to C and end the loop. */
+                    if (newProbabilitySum >= chosenValue)
+                    {
+                        C.add(P.get(j));
+                        done = true;
+                    }
                 }
-                else
-                {
-                    probabilitySum = newProbabilitySum;
-                    j++;
-                }
+                probabilitySum = newProbabilitySum;
+                j++;
             }
 
             /* Recompute the minimum distance of points in P from C. */
@@ -134,21 +127,14 @@ public class G13HM3
         }
 
         /********************************** LLOYD **********************************/
-        /* Restore P, WP and currentDistances with the centres selected by Kmeans++ */
-        P.addAll(C);
-        WP.addAll(C_WP);
-        for (int z = 0; z < k; z++)
-        {
-            currentDistances.add(new Pair(0,z));
-        }
         /* Perform iter iterations of LLoyd's algorithm. */
         for (int i = 0; i < iter; i++)
         {
-            /* Arraylist containing currently computed clusters as indexes of the points contained in P. */
+            /* ArrayList containing currently computed clusters as indexes of the points contained in P. */
             ArrayList<ArrayList<Integer>> clusters = new ArrayList<>(k);
 
             /* Partition(P,C) */
-            /* Create clusters which contain their centres. */
+            /* Create the clusters. */
             for (int z = 0; z < k; z++)
             {
                 clusters.add(new ArrayList<>());
@@ -163,17 +149,17 @@ public class G13HM3
             for (int z = 0; z < k; z++)
             {
                 Vector c = Vectors.zeros(P.get(0).size());
-                long sumOfweights = 0;
+                long sumOfWeights = 0;
                 for (int z0 = 0; z0 < clusters.get(z).size(); z0++)
                 {
                     /* Compute the sum of all coordinates. */
                     BLAS.axpy(WP.get(clusters.get(z).get(z0)), P.get(clusters.get(z).get(z0)), c);
                     /* Compute the sum of weights. */
-                    sumOfweights += WP.get(clusters.get(z).get(z0));
+                    sumOfWeights += WP.get(clusters.get(z).get(z0));
                 }
 
                 /* Compute the final average. */
-                BLAS.scal((1.0/sumOfweights),c);
+                BLAS.scal((1.0/sumOfWeights),c);
                 C.set(z, c);
             }
 
@@ -199,7 +185,6 @@ public class G13HM3
         return C;
     }
 
-
     public static double kmeansObj(ArrayList<Vector> P, ArrayList<Vector> C)
     {
         /* Sum of all distances of each point from the nearest centre. */
@@ -222,6 +207,7 @@ public class G13HM3
         /* Return the average distance. */
         return sumOfDistances/P.size();
     }
+
 
     /********************************** INPUT FUNCTIONS **********************************/
     public static Vector strToVector(String str)
