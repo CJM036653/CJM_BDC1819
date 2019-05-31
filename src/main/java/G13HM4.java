@@ -87,7 +87,7 @@ public class G13HM4
                 points.add(x.next());
                 weights.add(1L);
             }
-            ArrayList<Vector> centers = kmeansPP(points, weights, k, iter);
+            ArrayList<Vector> centers = G13HM3.kmeansPP(points, weights, k, iter);
             ArrayList<Long> weight_centers = compute_weights(points, centers);
             ArrayList<Tuple2<Vector,Long>> c_w = new ArrayList<>();
             for(int i =0; i < centers.size(); ++i)
@@ -98,16 +98,19 @@ public class G13HM4
             return c_w.iterator();
         });
 
-        coreset.cache();
-        coreset.count();
-        endTime = System.currentTimeMillis();
-        System.out.println("Round 1 of MR_kmedian requires " + (endTime - startTime) + " ms.");
 
         //------------- ROUND 2 ---------------------------
-        startTime = System.currentTimeMillis();
+
 
         ArrayList<Tuple2<Vector, Long>> elems = new ArrayList<>(k*L);
         elems.addAll(coreset.collect());
+
+        endTime = System.currentTimeMillis();
+
+        System.out.println("Round 1 of MR_kmedian requires " + (endTime - startTime) + " ms.");
+
+        startTime = System.currentTimeMillis();
+
         ArrayList<Vector> coresetPoints = new ArrayList<>();
         ArrayList<Long> weights = new ArrayList<>();
         for(int i =0; i< elems.size(); ++i)
