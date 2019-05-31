@@ -126,10 +126,11 @@ public class G13HM4
 
         double obj = pointset.map(x ->
             {
-                double distance = Math.sqrt(Vectors.sqdist(centers.get(0), x));
+                /* Compute the distance of each point from its centre. */
+                double distance = euclidean(centers.get(0),x);
                 for (int i = 1; i < centers.size(); i++)
                 {
-                    double newDistance = Math.sqrt(Vectors.sqdist(centers.get(i), x));
+                    double newDistance = euclidean(centers.get(i),x);
                     if (newDistance < distance)
                     {
                         distance = newDistance;
@@ -137,11 +138,13 @@ public class G13HM4
                 }
                 return distance;
             })
+                /* Sum all distances. */
             .reduce((x,y) -> x+y);
 
         endTime = System.currentTimeMillis();
         System.out.println("Round 3 of MR_kmedian requires " + (endTime - startTime) + " ms.");
 
+        /* Return the sum of distances divided by the number of points. */
         return obj/pointset.count();
     }
 
