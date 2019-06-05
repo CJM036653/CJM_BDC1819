@@ -87,7 +87,7 @@ public class G13HM4
                 points.add(x.next());
                 weights.add(1L);
             }
-            ArrayList<Vector> centers = G13HM3.kmeansPP(points, weights, k, iter);
+            ArrayList<Vector> centers = kmeansPP(points, weights, k, iter);
             ArrayList<Long> weight_centers = compute_weights(points, centers);
             ArrayList<Tuple2<Vector,Long>> c_w = new ArrayList<>();
             for(int i =0; i < centers.size(); ++i)
